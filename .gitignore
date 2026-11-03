@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+
+# The dataset archive and its parsed form. Both are reproducible from
+# src/data.py, which pins their SHA-256 digests, so neither is committed.
+data/CMAPSSData.zip
+data/parsed.npz
