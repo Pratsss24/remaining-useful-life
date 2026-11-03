@@ -55,6 +55,7 @@ from __future__ import annotations
 import numpy as np
 
 import agelaw
+import data
 
 SCHEMES = ("independent", "proportional", "end_of_test")
 
@@ -195,3 +196,78 @@ if __name__ == "__main__":
         print(f"  {row['treatment']:14s} beta {row['beta']:6.3f} "
               f"({row['beta_error']:+7.2%})   eta {row['eta']:7.2f} "
               f"({row['eta_error']:+7.2%})")
+
+
+# -- planted degradation paths, for estimator B --------------------------
+
+def degradation_fleet(n: int = 80, *, beta: float = TRUE_BETA,
+                      eta: float = TRUE_ETA, cap: int = 100,
+                      channels: int = 8, noise: float = 0.25,
+                      flat: int = 3, seed: int = 0) -> list:
+    """A fleet whose health law and detectability horizon are both known.
+
+    Built so that every claim `degradation` makes about itself can be
+    checked against a planted answer:
+
+    * Lifetimes come from the same Weibull used elsewhere, so the fleet's
+      age law is known too and both estimators can be run on one fleet.
+    * True health is `min(RUL, cap) / cap` exactly -- flat at 1 until the
+      unit comes within `cap` cycles of failure, then falling linearly to
+      0. So `cap` is the real detectability horizon, and the cap-selection
+      machinery has a right answer to find.
+    * `channels` sensors are affine functions of true health with
+      independent Gaussian noise of scale `noise`, plus `flat` channels
+      that are pure noise and carry nothing. The screening therefore has a
+      right answer to find as well.
+
+    Returns `data.Unit` records, so the real estimator runs on them
+    unmodified -- no parallel code path that could diverge from the one the
+    results come from.
+    """
+    rng = np.random.default_rng(seed + 17)
+    lifetimes_drawn = np.maximum(
+        20, np.round(eta * rng.weibull(beta, n)).astype(int))
+
+    # Fixed loadings, so the index has something stable to recover.
+    loading = rng.uniform(0.5, 2.0, channels) * rng.choice(
+        [-1.0, 1.0], channels)
+    offset = rng.uniform(-5.0, 5.0, channels)
+
+    fleet = []
+    for index, life in enumerate(lifetimes_drawn, start=1):
+        cycles = np.arange(1, life + 1)
+        remaining = life - cycles
+        health = np.minimum(remaining, cap) / cap
+
+        sensors = np.zeros((life, data.N_SENSORS))
+        live = health[:, None] * loading[None, :] + offset[None, :]
+        live = live + rng.normal(0.0, noise, live.shape)
+        sensors[:, :channels] = live
+        sensors[:, channels:channels + flat] = rng.normal(
+            0.0, noise, (life, flat))
+
+        fleet.append(data.Unit(
+            subset="SIM", split="train", unit=index,
+            settings=np.zeros((life, data.N_SETTINGS)),
+            sensors=sensors, rul_at_end=0))
+    return fleet
+
+
+def truncate_fleet(fleet: list, *, seed: int = 0, low: float = 0.15,
+                   high: float = 0.95) -> list:
+    """Censor a simulated fleet the way C-MAPSS censors its test set.
+
+    Each unit is cut at a uniform random fraction of its own life, which is
+    the lifetime-proportional scheme `censor` implements and the one the
+    real test fleet follows.
+    """
+    rng = np.random.default_rng(seed + 23)
+    out = []
+    for unit in fleet:
+        cut = max(5, int(round(float(rng.uniform(low, high))
+                               * unit.observed)))
+        out.append(data.Unit(
+            subset=unit.subset, split="test", unit=unit.unit,
+            settings=unit.settings[:cut], sensors=unit.sensors[:cut],
+            rul_at_end=unit.observed - cut))
+    return out
