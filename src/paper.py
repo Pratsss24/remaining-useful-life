@@ -334,14 +334,18 @@ class Paper:
 
         head, rows = table if table else ([], [])
         step = _points(CELL, 2.1)
+        moved = False
         while rows:
             # Whatever is left of the page, in whole rows, less the header.
             room = int((y - 0.1) / step) - 1
-            # A split that would orphan a row or two onto a near-empty
-            # continuation page reads as a layout fault; a table short
-            # enough to fit on a fresh page is better moved there whole.
-            orphaned = 0 < room < len(rows) and len(rows) - room < 3
-            if room < 3 or (orphaned and len(rows) <= PAGE_ROWS):
+            # A table split across a page break makes the reader carry its
+            # header over, and strands a fragment on an otherwise empty
+            # page. One short enough to fit on a fresh page is better moved
+            # there whole; `moved` makes sure that is tried only once, so a
+            # table too long for any page still splits.
+            splits = 0 < room < len(rows)
+            if room < 3 or (splits and len(rows) <= PAGE_ROWS and not moved):
+                moved = True
                 self._close(figure)
                 figure = self._blank()
                 y = self._heading(figure, f"{title} (continued)")
