@@ -4,10 +4,7 @@ Built over several sessions rather than one. Both estimators, the evaluation,
 the censoring counterfactual, the charts, the report and the README are done
 and committed; 80 tests pass. The analysis is complete as specified.
 
-Not done, deliberately:
-
-* **Not published.** The repo is local. Publishing to github.com/Pratsss24
-  with topics is the last step and is waiting on a decision, not on work.
+Published at https://github.com/Pratsss24/remaining-useful-life.
 
 Worth doing if the project is picked up again:
 
