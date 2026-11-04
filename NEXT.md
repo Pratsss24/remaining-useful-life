@@ -8,11 +8,6 @@ Published at https://github.com/Pratsss24/remaining-useful-life.
 
 Worth doing if the project is picked up again:
 
-* **Port the `paper.py` table-break fix back to the sibling repos.** The
-  vendored copy here now moves a short table whole to the next page rather
-  than orphaning one or two rows onto a near-empty continuation (`PAGE_ROWS`
-  and the `orphaned` test in `section`). The other fifteen repos carry the
-  older copy and have the same latent fault.
 * **FD002 and FD004 lead runs.** `run.py --subset FD002` works and the
   all-four-fleets table is computed every run, but the report's narrative
   pages are written around FD001 as the lead. Nothing is wrong on the other
