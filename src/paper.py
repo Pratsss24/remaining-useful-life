@@ -52,6 +52,10 @@ BODY = 9.8
 NOTE = 8.8
 CELL = 8.4
 
+# Rows a page carries under a heading alone, used only to decide whether a
+# table that will not fit here is worth moving whole to the next page.
+PAGE_ROWS = 30
+
 
 def _points(size: float, leading: float = 1.5) -> float:
     """A line of type at `size`, as a fraction of the page height."""
@@ -333,7 +337,11 @@ class Paper:
         while rows:
             # Whatever is left of the page, in whole rows, less the header.
             room = int((y - 0.1) / step) - 1
-            if room < 3:
+            # A split that would orphan a row or two onto a near-empty
+            # continuation page reads as a layout fault; a table short
+            # enough to fit on a fresh page is better moved there whole.
+            orphaned = 0 < room < len(rows) and len(rows) - room < 3
+            if room < 3 or (orphaned and len(rows) <= PAGE_ROWS):
                 self._close(figure)
                 figure = self._blank()
                 y = self._heading(figure, f"{title} (continued)")

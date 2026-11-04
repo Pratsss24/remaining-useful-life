@@ -1,31 +1,34 @@
 # Where this stands
 
-Work in progress, built over several sessions rather than one. Two commits so
-far: the data layer and the first of two planned estimators. No report yet, and
-no README with the headline result, because there is no headline result yet --
-the second estimator is what the project is actually about.
+Built over several sessions rather than one. Both estimators, the evaluation,
+the censoring counterfactual, the charts, the report and the README are done
+and committed; 80 tests pass. The analysis is complete as specified.
 
-Working now, with 46 tests passing:
+Not done, deliberately:
 
-* `src/data.py` -- fetches and caches the NASA C-MAPSS turbofan run-to-failure
-  archive, slices it into per-engine records, and recovers the operating-regime
-  count from the settings rather than assuming it.
-* `src/lifetimes.py` -- lifetime records, and the four ways of treating the
-  censored units.
-* `src/survival.py` -- Kaplan-Meier and non-parametric mean residual life, as
-  the distribution-free check on the parametric work.
-* `src/agelaw.py` -- estimator A: remaining life from the fleet's lifetime law,
-  given nothing but an engine's age.
-* `src/simulate.py` -- planted-truth fleets under three censoring schemes.
+* **Not published.** The repo is local. Publishing to github.com/Pratsss24
+  with topics is the last step and is waiting on a decision, not on work.
 
-Still to come: the sensor-driven estimator that estimator A is the floor for,
-the evaluation module that reports error against true remaining life and
-measured interval coverage, the sensor-selection analysis, the charts, and the
-PDF report.
+Worth doing if the project is picked up again:
 
-Run the tests with:
+* **Port the `paper.py` table-break fix back to the sibling repos.** The
+  vendored copy here now moves a short table whole to the next page rather
+  than orphaning one or two rows onto a near-empty continuation (`PAGE_ROWS`
+  and the `orphaned` test in `section`). The other fifteen repos carry the
+  older copy and have the same latent fault.
+* **FD002 and FD004 lead runs.** `run.py --subset FD002` works and the
+  all-four-fleets table is computed every run, but the report's narrative
+  pages are written around FD001 as the lead. Nothing is wrong on the other
+  fleets; the prose simply names FD001's numbers.
+* **The 50–75 band.** It is the one band where the age law beats the
+  degradation signal on FD001 (20.2 against 25.2) and the reason is not
+  established beyond "near the cap". A diagnosis would be a real addition.
 
+Run it with:
+
+    C:\Users\Admin\AppData\Local\Python\pythoncore-3.14-64\python.exe run.py
     C:\Users\Admin\AppData\Local\Python\pythoncore-3.14-64\python.exe -m pytest tests/ -q
 
-The data layer fetches about 12 MB on first use and caches it in `data/`, which
-is gitignored and reproducible; `src/data.py` pins the archive's SHA-256.
+The data layer fetches about 12 MB on first use and caches it in `data/`,
+which is gitignored and reproducible; `src/data.py` pins the archive's
+SHA-256 for both zip layers.
